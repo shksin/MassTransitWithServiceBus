@@ -10,31 +10,32 @@ namespace OrderConsumerWorkerApp
     {
         public static async Task Main(string[] args)
         {
-            await Host.CreateDefaultBuilder(args)
-            .ConfigureServices((hostContext, services) =>
-            {
-                services.AddMassTransit(x =>
-                {
-                    x.AddConsumer<OrderConsumer>();
-                    var serviceBusSettings = hostContext.Configuration.GetSection("ServiceBus").Get<ServiceBusSettings>();
-                    x.UsingAzureServiceBus((context, cfg) =>
-                    {
-                        cfg.Host(serviceBusSettings.ConnectionString);
-
-                        // Subscribe to OrderSubmitted directly on the topic, instead of configuring a queue
-                        cfg.SubscriptionEndpoint<Order>(serviceBusSettings.SubscriptionName, e =>
-                        {
-                            e.ConfigureConsumer<OrderConsumer>(context);
-                        });
-
-                        cfg.ConfigureEndpoints(context);
-                    });
-                });
-            })
-            .Build()
-            .RunAsync();
+            await CreateHostBuilder(args).Build().RunAsync();
         }
 
+        public static IHostBuilder CreateHostBuilder(string[] args)
+        {
+            return Host.CreateDefaultBuilder(args)
+                .ConfigureServices((hostContext, services) =>
+                {
+                    services.AddMassTransit(x =>
+                    {
+                        x.AddConsumer<OrderConsumer>();
+                        var serviceBusSettings = hostContext.Configuration.GetSection("ServiceBus").Get<ServiceBusSettings>();
+                        x.UsingAzureServiceBus((context, cfg) =>
+                        {
+                            cfg.Host(serviceBusSettings.ConnectionString);
+                            cfg.Message<Order>(m => m.SetEntityName(serviceBusSettings.TopicName));
+                            cfg.SubscriptionEndpoint<Order>(serviceBusSettings.SubscriptionName, e =>
+                            {
+                                e.ConfigureConsumer<OrderConsumer>(context);
+
+                            });
+
+                            cfg.ConfigureEndpoints(context);
+                        });
+                    });
+                });
+        }
     }
 }
-    

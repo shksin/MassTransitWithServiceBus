@@ -16,7 +16,6 @@ namespace OrderSenderAPI
                 {
                     var serviceBusSettings = builder.Configuration.GetSection("ServiceBus").Get<ServiceBusSettings>();
                     cfg.Host(serviceBusSettings.ConnectionString);
-
                     cfg.Message<Order>(m => m.SetEntityName(serviceBusSettings.TopicName));
                     
                 });

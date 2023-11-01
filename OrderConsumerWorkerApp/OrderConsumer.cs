@@ -18,10 +18,10 @@ namespace OrderConsumerWorkerApp
             _logger = logger;
         }
 
-        public Task Consume(ConsumeContext<Order> context)
+        public async Task Consume(ConsumeContext<Order> context)
         {
             _logger.LogInformation("Order Received: {OrderId}", context.Message.ItemId);
-            return Task.CompletedTask;
+            await Task.CompletedTask;
         }
     }
 }
